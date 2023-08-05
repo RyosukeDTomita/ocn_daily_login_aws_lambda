@@ -18,7 +18,7 @@ import os
 from os.path import join, dirname, abspath, exists
 
 
-def parse_args():
+def parse_args() -> dict:
     """parse_args.
     """
     parser = argparse.ArgumentParser()
@@ -35,7 +35,7 @@ def cookies_file_is_valid(cookies_file_path: str) -> bool:
     2. cookies.pklが空の場合にはFalseを返す。
     3. cookies.pklが存在し，中身がある場合にはtrueを返す。
     """
-    if not exists("cookies.pkl"):
+    if not exists(cookies_file_path):
         print("create cookies.pkl")
         with open(cookies_file_path, 'wb'):
             pass
@@ -43,9 +43,8 @@ def cookies_file_is_valid(cookies_file_path: str) -> bool:
     elif os.stat(cookies_file_path).st_size == 0:
         print("cookies.pkl is empty")
         return False
-    else:
-        print("cookies.pkl is valid")
-        return True
+    print("cookies.pkl is valid")
+    return True
 
 
 def fetch_driver():
@@ -98,9 +97,9 @@ def login(driver, user_id, password):
     time.sleep(5)
 
 
-def save_cookies(driver, cookies_file):
+def save_cookies(driver, cookies_file_path):
     cookies = driver.get_cookies()
-    pickle.dump(cookies, open(cookies_file, 'wb'))
+    pickle.dump(cookies, open(cookies_file_path, 'wb'))
 
 
 def main():
@@ -117,7 +116,7 @@ def main():
     url = "https://www.ocn.ne.jp/"
     cookies_file_path = abspath(join(dirname(__file__), 'cookies.pkl'))
 
-    if not cookies_file_is_valid(cookies_file_path):
+    if cookies_file_is_valid(cookies_file_path):
         return
 
     driver = fetch_driver()

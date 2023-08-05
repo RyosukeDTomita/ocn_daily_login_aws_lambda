@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  get ocn daily point automatically.
+Globals:
+  Function:
+    Timeout: 3
+
+# 開発環境か本番環境かを切り替えるためのパラメータ
+Parameters:
+  Environment:
+    Type: String
+    AllowValues:
+      - development
+    Default: development
+
+
+# 環境変数の設定
+Mappings:
+  EnvironmentMap:
+    development:
+      S3BucketCookie: cookie-for-iceman
+
+
+Resources:
+  # Lambda
+  PushOCNDailyPoint:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/push_ocn_daily_point/
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      TIMEOUT: 60
+      Environment:
+        Variables:
+          COOKIES_FILE:
+            !FindInMap [EnvironmentMap, !Ref Environment, S3BucketCookie]
+      Role: arn:aws:iam::${AWS::AccountId}:role/lambda-role # WEP
+
+  # IAMロール
+  S3ReadonlyAccessLole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: for-lambda-s3-readonly-access-role
+      # IAMロールがどのサービスまたはアカウントに対して信頼されるかを定義
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: s3-readonly-access-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  AmazonS3ReadOnlyAccess
+                Resource:
+                  - arn:aws:s3:::cookie-for-iceman/cookies.pkl
