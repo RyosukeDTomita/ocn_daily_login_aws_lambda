@@ -2,3 +2,5 @@ cookies.pkl
 test.sh
 PackageLayers/python/
 PackageLayers/push_ocn_libs.zip
+selenium_tools/headless/
+selenium_tools/*.zip

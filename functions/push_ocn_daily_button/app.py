@@ -6,12 +6,8 @@ Author: Ryosuke D. Tomita
 Created: 2023/08/05
 """
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from webdriver_manager.chrome import ChromeDriverManager
 import pickle
 import time
-import requests
 import os
 import json
 import boto3
@@ -62,14 +58,19 @@ def _fetch_driver():
     """fetch_driver.
     ヘッドレスモードでドライバを取得する。
     """
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--window-size=1920,1080")
-    # 最新バージョンを取得
-    res = requests.get('https://chromedriver.storage.googleapis.com/LATEST_RELEASE')
+    options = webdriver.ChromeOptions()
+    # headlessモードのchromiumを指定
+    options.binary_location = "/opt/headless/headless-chromium"
+    options.add_argument("--headless")
+    options.add_argument('--single-process')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--no-sandbox")
+    # Layersに配置したものは/opt以下に展開される。
     driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager(res.text).install()),
-        options=chrome_options)
+        # chromedriverのパスを指定
+        executable_path="/opt/headless/chromedriver",
+        options=options
+    )
     return driver
 
 

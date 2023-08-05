@@ -29,7 +29,7 @@ Resources:
     Properties:
       CodeUri: functions/push_ocn_daily_point/
       Handler: app.lambda_handler
-      Runtime: python3.8
+      Runtime: python3.7
       TIMEOUT: 60
       Environment:
         Variables:
