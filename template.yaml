@@ -37,6 +37,19 @@ Resources:
             !FindInMap [EnvironmentMap, !Ref Environment, S3BucketCookie]
       Role: arn:aws:iam::${AWS::AccountId}:role/lambda-role # WEP
 
+    # Lambda Layers
+    PackageLayers:
+      Type: AWS::Serverless::LayerVersion
+      DeletionPolicy: Retain # スタック削除時に削除しない
+      Properties:
+        LayerName: PackageLayers
+        Description: python3 library's for lambda
+        ContentUri: .PackageLayers/python/
+        CompatibleRuntimes:
+          - python3.9
+      Metadata:
+        BuildMethod: python3.9
+
   # IAMロール
   S3ReadonlyAccessLole:
     Type: AWS::IAM::Role
@@ -60,3 +73,34 @@ Resources:
                   AmazonS3ReadOnlyAccess
                 Resource:
                   - arn:aws:s3:::cookie-for-iceman/cookies.pkl
+    
+    # S3
+    S3BucketCookie:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: !Ref S3BucketCookie
+        AccessControl: Private
+
+    # EventBridge
+    EventLaunch:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: AWS Lambda PushOCNDailyPoint
+        EventBusName: default
+        ScheduleExpression: cron(0 1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
+        State: ENABLED
+        Targets:
+        - Id: id_push_OCNDailyPoint # テンプレート内でユニークなリソースを識別する値。
+          Arn: !Ref pushOCNDailyPoint
+          # よくわからんから保留
+          # RoleArn: arn:aws:iam: 
+          # InputTransformer:
+          #   InputPathsMap:
+          #     schedule_time: $.time
+          #   InputTemplate: |
+          #     {
+          #       "schedule_time": <schedule_time>
+          #     }
+          # RetryPolicy:
+          #   MaximumRetryAttempts: 3
+          #   MaximumEventAgeInSeconds: 3600
