@@ -51,7 +51,9 @@ def _get_cookies_from_s3(bucket_name):
     bucket = s3.Bucket(bucket_name)
     obj = bucket.Object(object_key)
     response = obj.get()
-    return response['Body'].read()
+    with open('/tmp/temp_cookies.pkl', 'wb') as tf:
+        tf.write(response['Body'].read())
+    return '/tmp/temp_cookies.pkl'
 
 
 def _fetch_driver():
@@ -75,9 +77,10 @@ def _fetch_driver():
 
 
 def _set_cookies(driver, cookies_file):
-    cookies = pickle.load(open(cookies_file, 'rb'))
-    for c in cookies:
-        driver.add_cookie(c)
+    with open(cookies_file, 'rb') as f:
+        cookies = pickle.load(f)
+        for c in cookies:
+            driver.add_cookie(c)
 
 
 def _get_daily_point(driver):

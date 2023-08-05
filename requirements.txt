@@ -1,4 +1,0 @@
-boto3==1.28.19
-Requests==2.31.0
-selenium==4.11.2
-webdriver_manager==3.8.6
