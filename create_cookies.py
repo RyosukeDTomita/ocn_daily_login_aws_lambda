@@ -16,6 +16,7 @@ import time
 import requests
 import os
 from os.path import join, dirname, abspath, exists
+import boto3
 
 
 def parse_args() -> dict:
@@ -24,8 +25,15 @@ def parse_args() -> dict:
     parser = argparse.ArgumentParser()
     parser.add_argument("-u", "--userid", help="docomo userID", type=str)
     parser.add_argument("-p", "--password", help="docomo user password", type=str)
+
+    parser.add_argument("-p", "--profile", help="aws cli profile", type=str, default="default")
+    parser.add_argument("-b", "--bucket", help="bucket name", type=str)
     p = parser.parse_args()
-    args = {"userid": p.userid, "password": p.password}
+    args = {"userid": p.userid,
+            "password": p.password,
+            "profile": p.profile,
+            "bucket": p.bucket
+            }
     return args
 
 
@@ -102,6 +110,16 @@ def save_cookies(driver, cookies_file_path):
     pickle.dump(cookies, open(cookies_file_path, 'wb'))
 
 
+def upload_to_s3(bucket_name, cookie, profile):
+    """_summary_
+    boto3は~/.aws/configにあるプロファイルを読み込む仕様のため
+    場所を変更しない。
+    """
+    session = boto3.Session(profile_name=profile)
+    s3 = session.client("s3")
+    s3.upload_file(cookie, bucket_name, cookie)  # (local_file, bucket_name, s3_key)
+
+
 def main():
     """_summary_
     1. コマンドライン引数からid，passwordを取得する。
@@ -113,6 +131,8 @@ def main():
     args = parse_args()
     user_id = args['userid']
     password = args['password']
+    bucket_name = args['bucket'] # s3 bucket
+    profile = args['profile'] # aws cli profile
     url = "https://www.ocn.ne.jp/"
     cookies_file_path = abspath(join(dirname(__file__), 'cookies.pkl'))
 
@@ -127,6 +147,8 @@ def main():
 
     save_cookies(driver, cookies_file_path)
     driver.quit()
+
+    upload_to_s3(bucket_name, cookies_file_path, profile)
 
 
 if __name__ == '__main__':
