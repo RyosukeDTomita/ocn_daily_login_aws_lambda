@@ -7,9 +7,9 @@
 
 # ABOUT
 - Using selenium, push [ocn top page](https://www.ocn.ne.jp/) "OCN訪問ポイント" button automatically to get Dpoint.
-- This script can save session information to [cookies.pkl](./cookies.pkl)
+- This script can save session information to cookies.pkl
 
-![ocn訪問ポイント](./doc/fig/ocn訪問ポイント.png)
+![ocn訪問ポイント](./docs/fig/ocn訪問ポイント.png)
 
 
 # ENVIRONMENT
@@ -29,6 +29,7 @@ pip -r requirements.txt
 ```
 
 # HOW TO USE
+WEP
 
 ```shell
 ```
