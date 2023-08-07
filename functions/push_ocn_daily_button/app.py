@@ -6,6 +6,7 @@ Author: Ryosuke D. Tomita
 Created: 2023/08/05
 """
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 import pickle
 import time
 import os
@@ -16,6 +17,7 @@ import boto3
 def lambda_handler(event, context):
     """
     実質的なmain関数
+    メモリ不足だとタイムアウトになったためとりあえず3008を指定
     """
     # get environment variables
     url = "https://www.ocn.ne.jp/"
@@ -27,6 +29,7 @@ def lambda_handler(event, context):
     driver = _fetch_driver()
 
     # driverにcookiewをセットしてログイン。
+    driver.get(url)
     _set_cookies(driver, cookies_file)
     driver.get(url)
 
@@ -80,6 +83,8 @@ def _set_cookies(driver, cookies_file):
     with open(cookies_file, 'rb') as f:
         cookies = pickle.load(f)
         for c in cookies:
+            name = c['name']
+            print("name: ", name)
             driver.add_cookie(c)
 
 
@@ -97,3 +102,7 @@ def _get_daily_point(driver):
     point_button = driver.find_element(By.XPATH, '//*[@id="normalget"]/img')
     point_button.click()
     time.sleep(3)
+
+
+if __name__ == "__main__":
+    lambda_handler(None, None)
