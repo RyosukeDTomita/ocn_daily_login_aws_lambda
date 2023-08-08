@@ -1,7 +1,14 @@
 # coding: utf-8
 """
 Description: use cookies.pkl stored in S3 and login "https://www.ocn.ne.jp/" to push the ocn daily point button.
-Usage: AWS Lambada
+Usage: This function is run by AWS EventBridge.
+
+Settings:
+- Lambda memory:3008 MB
+- Lambda timeout: 1 min.
+- Lambda layers: headless-chromium, chromedriver (created by ../../selenium_tools) and python libraries(created by ../../PackageLayers).
+- Lambda Environment variables: S3BucketCookie (S3 bucket name where cookies.pkl is stored.)
+
 Author: Ryosuke D. Tomita
 Created: 2023/08/05
 """
@@ -17,7 +24,7 @@ import boto3
 def lambda_handler(event, context):
     """
     実質的なmain関数
-    メモリ不足だとタイムアウトになったためとりあえず3008を指定
+    メモリ不足だとタイムアウトになったためとりあえず3008 MBを指定
     """
     # get environment variables
     url = "https://www.ocn.ne.jp/"
