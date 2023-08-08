@@ -111,10 +111,19 @@ sam delete # delete stack
 - create Lambda Layers
 
 ```shell
-cd PackageLayers
+cd PackageLayers/
 source mk_lambda_layer.sh
+cd selenium_tools/
+source mk_driver_lib_layer.sh
 ```
 - paste ./functions/push_ocn_daily_button/app.py
+- change lambda settins
+
+|       |       |
+|-------|-------|
+|timeout|memory |
+|1 min  |3007 MB|
+
 
 ### S3 Bucket
 - create S3 Bucket to save `cookies.pkl`
