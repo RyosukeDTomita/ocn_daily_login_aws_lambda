@@ -13,6 +13,8 @@ Author: Ryosuke D. Tomita
 Created: 2023/08/05
 """
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import pickle
 import time
@@ -38,7 +40,10 @@ def lambda_handler(event, context):
     # driverにcookiewをセットしてログイン。
     driver.get(url)
     _set_cookies(driver, cookies_file)
-    driver.get(url)
+    driver.get(url) # reload
+
+    # ログイン後画面に移動するまで10秒まで待機する。
+    _wait_login(driver)
 
     # push daily point button.
     _get_daily_point(driver)
@@ -95,6 +100,19 @@ def _set_cookies(driver, cookies_file):
             driver.add_cookie(c)
 
 
+def _wait_login(driver):
+    """_summary_
+    driverにcookieをセット後にログイン後ページに遷移したかを
+    ログイン後ページにしか存在しないログアウトボタンが表示されるまで待機する。
+
+    Args:
+        driver (_type_): _description_
+    """
+    wait = WebDriverWait(driver, 10)
+    wait.until(
+        EC.presence_of_element_located((By.XPATH, '//*[@id="pa14-pout-3d"]')))
+
+
 def _get_daily_point(driver):
     """get_daily_point.
     デイリーボタンを押す。
@@ -106,7 +124,7 @@ def _get_daily_point(driver):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
     time.sleep(2)
 
-    point_button = driver.find_element(By.XPATH, '//*[@id="normalget"]/img')
+    point_button = driver.find_element(By.XPATH, '//*[@id="normalget"]/img') # XPATHがChromeとchromiumで異なるようで要素を見つけられない。
     point_button.click()
     time.sleep(3)
 
