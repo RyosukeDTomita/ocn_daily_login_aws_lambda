@@ -118,6 +118,8 @@ def upload_to_s3(bucket_name, cookie, profile):
     boto3は~/.aws/configにあるプロファイルを読み込む仕様のため
     場所を変更しない。
 
+    aws s3 cp cookies.pkl s3://cookie-for-iceman2 --acl private --profile=default
+upload: ./cookies.pkl to s3://cookie-for-iceman2/cookies.pkl
     """
     session = boto3.Session(profile_name=profile)
     s3 = session.client("s3")

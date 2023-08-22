@@ -76,16 +76,17 @@ def _fetch_driver():
     ヘッドレスモードでドライバを取得する。
     """
     options = webdriver.ChromeOptions()
+    # CloudFormationを使わない場合には/opt/headless/headless-chromiumを指定
+    options.binary_location = "/opt/python/headless-chromium"  
     # headlessモードのchromiumを指定
-    options.binary_location = "/opt/headless/headless-chromium"
     options.add_argument("--headless")
     options.add_argument('--single-process')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--no-sandbox")
     # Layersに配置したものは/opt以下に展開される。
     driver = webdriver.Chrome(
-        # chromedriverのパスを指定
-        executable_path="/opt/headless/chromedriver",
+        # chromedriverのパスを指定。CloudFormationを使わない場合には/opt/headless/chromedriverを指定
+        executable_path="/opt/python/chromedriver",
         options=options
     )
     return driver

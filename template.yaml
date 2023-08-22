@@ -43,20 +43,9 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-  # Lambda Layers CloudFormationを使うなら，Lambdaのapp.pyのrequirements.txtがあればLayersの作成は不要
-  # PythonLibLayers:
-  #   Type: AWS::Serverless::LayerVersion
-  #   #DeletionPolicy: Retain # スタック削除時に削除しない
-  #   Properties:
-  #     LayerName: python-lib-layers
-  #     Description: python3 library's for lambda
-  #     ContentUri: create_python_lib_layers/python/
-  #     CompatibleRuntimes:
-  #       - python3.7
-  #   Metadata:
-  #     BuildMethod: python3.7
-
+  # Lambda Layers
   SeleniumDriverLayers:
     Type: AWS::Serverless::LayerVersion
     #DeletionPolicy: Retain # スタック削除時に削除しない
@@ -69,6 +58,19 @@ Resources:
     Metadata:
       BuildMethod: python3.7
 
+  # CloudFormationを使うなら，Lambdaのapp.pyのrequirements.txtがあればpythonの外部ライブラリ用のLayersの作成は不要
+  # PythonLibLayers:
+  #   Type: AWS::Serverless::LayerVersion
+  #   #DeletionPolicy: Retain # スタック削除時に削除しない
+  #   Properties:
+  #     LayerName: python-lib-layers
+  #     Description: python3 library's for lambda
+  #     ContentUri: create_python_lib_layers/python/
+  #     CompatibleRuntimes:
+  #       - python3.7
+  #   Metadata:
+  #     BuildMethod: python3.7
+
   # Lambda
   PushOCNDailyPoint:
     Type: AWS::Serverless::Function
@@ -76,7 +78,8 @@ Resources:
       CodeUri: functions/push_ocn_daily_button/
       Handler: app.lambda_handler
       Runtime: python3.7
-      Timeout: 60
+      Timeout: 120
+      MemorySize: 3007
       Environment:
         Variables:
           BUCKET_NAME:
@@ -85,8 +88,7 @@ Resources:
       Layers:
         # - !Ref PythonLibLayers
         - !Ref SeleniumDriverLayers
-  
-    
+
   # S3
   S3Bucket: # 環境変数で定義したバケット名とかぶらない名前でtemplate内で宣言
     Type: AWS::S3::Bucket
@@ -100,11 +102,14 @@ Resources:
     Properties:
       Description: AWS Lambda PushOCNDailyPoint
       EventBusName: default
-      ScheduleExpression: cron(0 1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
+      EventPattern:
+        test:
+          - Hello
+      ScheduleExpression: cron(0 */1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
       State: ENABLED
       Targets:
       - Id: id_push_OCNDailyPoint # テンプレート内でユニークなリソースを識別する値。
         Arn: !GetAtt PushOCNDailyPoint.Arn
         RetryPolicy:
-          MaximumRetryAttempts: 3
+          MaximumRetryAttempts: 2
           MaximumEventAgeInSeconds: 300
