@@ -8,12 +8,15 @@
 
 
 # ABOUT
+![template](./docs/fig/template1-designer.png)
+
 - Using selenium, push [ocn top page](https://www.ocn.ne.jp/) "OCN訪問ポイント" button automatically to get Dpoint.
 - OCN site has two factor authentication, but AWS Lambda cannot get SMS Auhentication PIN when running.
 - That's why, this Lambda use prepared `cookies.pkl` to login.
 - cookies.pkl must have been created by [create_cookies.py](./create_cookies.py) locally and uploaded to S3 beforehand. 
 
 ![ocn訪問ポイント](./docs/fig/ocn訪問ポイント.png)
+
 ******
 
 

@@ -44,18 +44,18 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
 
-  # Lambda Layers
-  PythonLibLayers:
-    Type: AWS::Serverless::LayerVersion
-    #DeletionPolicy: Retain # スタック削除時に削除しない
-    Properties:
-      LayerName: python-lib-layers
-      Description: python3 library's for lambda
-      ContentUri: create_python_lib_layers/python/
-      CompatibleRuntimes:
-        - python3.7
-    Metadata:
-      BuildMethod: python3.7
+  # Lambda Layers CloudFormationを使うなら，Lambdaのapp.pyのrequirements.txtがあればLayersの作成は不要
+  # PythonLibLayers:
+  #   Type: AWS::Serverless::LayerVersion
+  #   #DeletionPolicy: Retain # スタック削除時に削除しない
+  #   Properties:
+  #     LayerName: python-lib-layers
+  #     Description: python3 library's for lambda
+  #     ContentUri: create_python_lib_layers/python/
+  #     CompatibleRuntimes:
+  #       - python3.7
+  #   Metadata:
+  #     BuildMethod: python3.7
 
   SeleniumDriverLayers:
     Type: AWS::Serverless::LayerVersion
@@ -80,12 +80,11 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME:
-            #!FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
             !Ref S3Bucket
-      #Role: !GetAtt S3ReadonlyAccessRole.Arn
+      Role: !GetAtt S3ReadonlyAccessRole.Arn
       Layers:
-        - !Ref PythonLibLayers
-          # - !Ref SeleniumDriverLayers
+        # - !Ref PythonLibLayers
+        - !Ref SeleniumDriverLayers
   
     
   # S3
