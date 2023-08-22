@@ -77,7 +77,7 @@ pip -r requirements.txt
 
 ```
 
-## CloudFormation(WIP)
+## Use CloudFormation
 ### AWS SAM settings
 
 > [how to install](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/install-sam-cli.html)
@@ -93,11 +93,11 @@ sam --version
 ```
 
 
-### build and deploy(WEP)
+### build and deploy
 
 ```shell
 sam build
-sam deploy --guided
+sam deploy --guided --capabilities CAPABILITY_NAMED_IAM
 ```
 
 ```shell
@@ -107,6 +107,7 @@ sam delete # delete stack
 
 
 ## AWS Console(Instead of CloudFormation)
+If you use CloudFormation, don't have to this step.
 
 ### AWS Lambda
 - Create Lambda Basic Excecution IAM role and Add `AmazonS3ReadOnlyAccess`
