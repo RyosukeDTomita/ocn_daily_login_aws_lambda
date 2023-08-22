@@ -58,7 +58,7 @@ def fetch_driver():
     """
     options = webdriver.ChromeOptions()
     # headlessモードのchromiumを指定
-    options.binary_location = "./selenium_tools/headless/headless-chromium"
+    options.binary_location = "./create_selenium_driver_layers/headless/headless-chromium"
     options.add_argument("--headless")
     options.add_argument('--single-process')
     options.add_argument('--disable-dev-shm-usage')
@@ -66,7 +66,7 @@ def fetch_driver():
     # Layersに配置したものは/opt以下に展開される。
     driver = webdriver.Chrome(
         # chromedriverのパスを指定
-        executable_path="./selenium_tools/headless/chromedriver",
+        executable_path="./create_selenium_driver_layers/headless/chromedriver",
         options=options
     )
     return driver

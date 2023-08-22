@@ -1,3 +1,7 @@
+# !GetAttはテンプレート内でのARN等の参照に使う。
+# !Refはテンプレート内でのResourcesの参照に使う。
+# DependsOnには!Refを使わない。
+# CloudFomationはリソースの依存関係は!Refがついている場合には自動で解決される。
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
@@ -11,7 +15,7 @@ Globals:
 Parameters:
   Environment:
     Type: String
-    AllowValues:
+    AllowedValues:
       - development
     Default: development
 
@@ -20,12 +24,12 @@ Parameters:
 Mappings:
   EnvironmentMap:
     development:
-      S3BucketCookie: cookie-for-iceman2
+      S3BucketForCookie: cookie-for-iceman2
 
 
 Resources:
   # Lambda用のIAMロール
-  S3ReadonlyAccessLole:
+  S3ReadonlyAccessRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: for-lambda-s3-readonly-access-role
@@ -37,16 +41,33 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: s3-readonly-access-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  AmazonS3ReadOnlyAccess
-                Resource:
-                - !Ref S3BucketCookie
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  # Lambda Layers
+  PythonLibLayers:
+    Type: AWS::Serverless::LayerVersion
+    #DeletionPolicy: Retain # スタック削除時に削除しない
+    Properties:
+      LayerName: python-lib-layers
+      Description: python3 library's for lambda
+      ContentUri: create_python_lib_layers/python/
+      CompatibleRuntimes:
+        - python3.7
+    Metadata:
+      BuildMethod: python3.7
+
+  SeleniumDriverLayers:
+    Type: AWS::Serverless::LayerVersion
+    #DeletionPolicy: Retain # スタック削除時に削除しない
+    Properties:
+      LayerName: selenium-driver-layers
+      Description: python3 library's for lambda
+      ContentUri: create_selenium_driver_layers/headless/
+      CompatibleRuntimes:
+        - python3.7
+    Metadata:
+      BuildMethod: python3.7
 
   # Lambda
   PushOCNDailyPoint:
@@ -58,56 +79,33 @@ Resources:
       Timeout: 60
       Environment:
         Variables:
-          COOKIES_FILE:
-            !FindInMap [EnvironmentMap, !Ref Environment, S3BucketCookie]
-      Role: !GetAtt S3ReadonlyAccessLole.Arn
+          BUCKET_NAME:
+            #!FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
+            !Ref S3Bucket
+      #Role: !GetAtt S3ReadonlyAccessRole.Arn
       Layers:
-        - !Ref PackageLayers
-        - !Ref SeleniumDriverLayers 
-
-    # Lambda Layers
-    PackageLayers:
-      Type: AWS::Serverless::LayerVersion
-      #DeletionPolicy: Retain # スタック削除時に削除しない
-      Properties:
-        LayerName: PackageLayers
-        Description: python3 library's for lambda
-        ContentUri: PackageLayers/python/
-        CompatibleRuntimes:
-          - python3.7
-      Metadata:
-        BuildMethod: python3.7
-
-    SeleniumDriverLayers:
-      Type: AWS::Serverless::LayerVersion
-      #DeletionPolicy: Retain # スタック削除時に削除しない
-      Properties:
-        LayerName: PackageLayers
-        Description: python3 library's for lambda
-        ContentUri: selenium_tools/headless
-        CompatibleRuntimes:
-          - python3.7
-      Metadata:
-        BuildMethod: python3.7
+        - !Ref PythonLibLayers
+          # - !Ref SeleniumDriverLayers
+  
     
-    # S3
-    S3BucketCookie:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: !Ref S3BucketCookie
-        AccessControl: Private
+  # S3
+  S3Bucket: # 環境変数で定義したバケット名とかぶらない名前でtemplate内で宣言
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
+      AccessControl: Private
 
-    # EventBridge
-    EventLaunch:
-      Type: AWS::Events::Rule
-      Properties:
-        Description: AWS Lambda PushOCNDailyPoint
-        EventBusName: default
-        ScheduleExpression: cron(0 1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
-        State: ENABLED
-        Targets:
-        - Id: id_push_OCNDailyPoint # テンプレート内でユニークなリソースを識別する値。
-          Arn: !Ref pushOCNDailyPoint
-          RetryPolicy:
-            MaximumRetryAttempts: 3
-            MaximumEventAgeInSeconds: 300
+  # EventBridge
+  EventLaunch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: AWS Lambda PushOCNDailyPoint
+      EventBusName: default
+      ScheduleExpression: cron(0 1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
+      State: ENABLED
+      Targets:
+      - Id: id_push_OCNDailyPoint # テンプレート内でユニークなリソースを識別する値。
+        Arn: !GetAtt PushOCNDailyPoint.Arn
+        RetryPolicy:
+          MaximumRetryAttempts: 3
+          MaximumEventAgeInSeconds: 300

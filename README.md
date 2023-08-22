@@ -111,11 +111,13 @@ sam delete # delete stack
 - create Lambda Layers
 
 ```shell
-cd PackageLayers/
+cd create_python_lib_layers
 source mk_lambda_layer.sh
-cd selenium_tools/
+cd create_selenium_driver_layers
 source mk_driver_lib_layer.sh
 ```
+
+
 - paste ./functions/push_ocn_daily_button/app.py
 - change lambda settins
 

@@ -30,7 +30,7 @@ def lambda_handler(event, context):
     """
     # get environment variables
     url = "https://www.ocn.ne.jp/"
-    bucket_name = os.environ["S3BucketCookie"]
+    bucket_name = os.environ["Bucket_Name"]
 
     # get cookies from s3
     cookies_file = _get_cookies_from_s3(bucket_name)

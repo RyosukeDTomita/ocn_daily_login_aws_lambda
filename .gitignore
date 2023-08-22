@@ -1,9 +1,9 @@
 cookies.pkl
 test.sh
-PackageLayers/python/
-PackageLayers/push_ocn_libs.zip
-selenium_tools/headless/
-selenium_tools/*.zip
+create_python_lib_layers/python
+create_python_lib_layers/push_ocn_libs.zip
+create_selenium_driver_layers/headless
+create_selenium_driver_layers/*.zip
 functions/push_ocn_daily_button/app_local.py
 .aws-sam/
 samconfig.toml
