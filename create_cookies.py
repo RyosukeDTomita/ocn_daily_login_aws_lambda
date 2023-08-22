@@ -58,7 +58,7 @@ def fetch_driver():
     """
     options = webdriver.ChromeOptions()
     # headlessモードのchromiumを指定
-    options.binary_location = "./selenium_tools/headless/headless-chromium"
+    options.binary_location = "./create_selenium_driver_layers/headless/headless-chromium"
     options.add_argument("--headless")
     options.add_argument('--single-process')
     options.add_argument('--disable-dev-shm-usage')
@@ -66,7 +66,7 @@ def fetch_driver():
     # Layersに配置したものは/opt以下に展開される。
     driver = webdriver.Chrome(
         # chromedriverのパスを指定
-        executable_path="./selenium_tools/headless/chromedriver",
+        executable_path="./create_selenium_driver_layers/headless/chromedriver",
         options=options
     )
     return driver
@@ -118,6 +118,8 @@ def upload_to_s3(bucket_name, cookie, profile):
     boto3は~/.aws/configにあるプロファイルを読み込む仕様のため
     場所を変更しない。
 
+    aws s3 cp cookies.pkl s3://cookie-for-iceman2 --acl private --profile=default
+upload: ./cookies.pkl to s3://cookie-for-iceman2/cookies.pkl
     """
     session = boto3.Session(profile_name=profile)
     s3 = session.client("s3")

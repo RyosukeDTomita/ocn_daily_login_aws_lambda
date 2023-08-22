@@ -8,12 +8,15 @@
 
 
 # ABOUT
+![template](./docs/fig/template1-designer.png)
+
 - Using selenium, push [ocn top page](https://www.ocn.ne.jp/) "OCN訪問ポイント" button automatically to get Dpoint.
 - OCN site has two factor authentication, but AWS Lambda cannot get SMS Auhentication PIN when running.
 - That's why, this Lambda use prepared `cookies.pkl` to login.
 - cookies.pkl must have been created by [create_cookies.py](./create_cookies.py) locally and uploaded to S3 beforehand. 
 
 ![ocn訪問ポイント](./docs/fig/ocn訪問ポイント.png)
+
 ******
 
 
@@ -74,7 +77,7 @@ pip -r requirements.txt
 
 ```
 
-## CloudFormation(WIP)
+## Use CloudFormation
 ### AWS SAM settings
 
 > [how to install](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/install-sam-cli.html)
@@ -90,59 +93,19 @@ sam --version
 ```
 
 
-### build and deploy(WEP)
+### build and deploy
 
 ```shell
 sam build
-sam deploy --guided
+sam deploy --guided --capabilities CAPABILITY_NAMED_IAM
 ```
 
 ```shell
 sam delete # delete stack
 ```
+If you want to use GUI, see [README_gui.md](./docs/README_gui.md)
 ******
 
-
-## AWS Console(Instead of CloudFormation)
-
-### AWS Lambda
-- Create Lambda Basic Excecution IAM role and Add `AmazonS3ReadOnlyAccess`
-
-- create Lambda Layers
-
-```shell
-cd PackageLayers/
-source mk_lambda_layer.sh
-cd selenium_tools/
-source mk_driver_lib_layer.sh
-```
-- paste ./functions/push_ocn_daily_button/app.py
-- change lambda settins
-
-|       |       |
-|-------|-------|
-|timeout|memory |
-|1 min  |3007 MB|
-
-
-### S3 Bucket
-- create S3 Bucket to save `cookies.pkl`
-> Bucket Name example: cookie-for-iceman
-
-### EventBridge
-- Choose `Flexible time window`
-> Scheduler invokes your schedule within the time window you specify.
-- Cron style schedule settings.
-
-```
-0 1 * * ? *
-Wed, 09 Aug 2023 01:00:00 (UTC+09:00)
-Thu, 10 Aug 2023 01:00:00 (UTC+09:00)
-Fri, 11 Aug 2023 01:00:00 (UTC+09:00)
-Sat, 12 Aug 2023 01:00:00 (UTC+09:00)
-Sun, 13 Aug 2023 01:00:00 (UTC+09:00)
-```
-******
 
 
 # HOW TO USE

@@ -1,3 +1,7 @@
+# !GetAttはテンプレート内でのARN等の参照に使う。
+# !Refはテンプレート内でのResourcesの参照に使う。
+# DependsOnには!Refを使わない。
+# CloudFomationはリソースの依存関係は!Refがついている場合には自動で解決される。
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
@@ -6,11 +10,12 @@ Globals:
   Function:
     Timeout: 3
 
+
 # 開発環境か本番環境かを切り替えるためのパラメータ
 Parameters:
   Environment:
     Type: String
-    AllowValues:
+    AllowedValues:
       - development
     Default: development
 
@@ -19,39 +24,12 @@ Parameters:
 Mappings:
   EnvironmentMap:
     development:
-      S3BucketCookie: cookie-for-iceman
+      S3BucketForCookie: cookie-for-iceman2
 
 
 Resources:
-  # Lambda
-  PushOCNDailyPoint:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/push_ocn_daily_point/
-      Handler: app.lambda_handler
-      Runtime: python3.7
-      TIMEOUT: 60
-      Environment:
-        Variables:
-          COOKIES_FILE:
-            !FindInMap [EnvironmentMap, !Ref Environment, S3BucketCookie]
-      Role: arn:aws:iam::${AWS::AccountId}:role/lambda-role # WEP
-
-    # Lambda Layers
-    PackageLayers:
-      Type: AWS::Serverless::LayerVersion
-      DeletionPolicy: Retain # スタック削除時に削除しない
-      Properties:
-        LayerName: PackageLayers
-        Description: python3 library's for lambda
-        ContentUri: .PackageLayers/python/
-        CompatibleRuntimes:
-          - python3.9
-      Metadata:
-        BuildMethod: python3.9
-
-  # IAMロール
-  S3ReadonlyAccessLole:
+  # Lambda用のIAMロール
+  S3ReadonlyAccessRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: for-lambda-s3-readonly-access-role
@@ -63,44 +41,75 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-      Policies:
-        - PolicyName: s3-readonly-access-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  AmazonS3ReadOnlyAccess
-                Resource:
-                  - arn:aws:s3:::cookie-for-iceman/cookies.pkl
-    
-    # S3
-    S3BucketCookie:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: !Ref S3BucketCookie
-        AccessControl: Private
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
-    # EventBridge
-    EventLaunch:
-      Type: AWS::Events::Rule
-      Properties:
-        Description: AWS Lambda PushOCNDailyPoint
-        EventBusName: default
-        ScheduleExpression: cron(0 1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
-        State: ENABLED
-        Targets:
-        - Id: id_push_OCNDailyPoint # テンプレート内でユニークなリソースを識別する値。
-          Arn: !Ref pushOCNDailyPoint
-          # よくわからんから保留
-          # RoleArn: arn:aws:iam: 
-          # InputTransformer:
-          #   InputPathsMap:
-          #     schedule_time: $.time
-          #   InputTemplate: |
-          #     {
-          #       "schedule_time": <schedule_time>
-          #     }
-          # RetryPolicy:
-          #   MaximumRetryAttempts: 3
-          #   MaximumEventAgeInSeconds: 3600
+  # Lambda Layers
+  SeleniumDriverLayers:
+    Type: AWS::Serverless::LayerVersion
+    #DeletionPolicy: Retain # スタック削除時に削除しない
+    Properties:
+      LayerName: selenium-driver-layers
+      Description: python3 library's for lambda
+      ContentUri: create_selenium_driver_layers/headless/
+      CompatibleRuntimes:
+        - python3.7
+    Metadata:
+      BuildMethod: python3.7
+
+  # CloudFormationを使うなら，Lambdaのapp.pyのrequirements.txtがあればpythonの外部ライブラリ用のLayersの作成は不要
+  # PythonLibLayers:
+  #   Type: AWS::Serverless::LayerVersion
+  #   #DeletionPolicy: Retain # スタック削除時に削除しない
+  #   Properties:
+  #     LayerName: python-lib-layers
+  #     Description: python3 library's for lambda
+  #     ContentUri: create_python_lib_layers/python/
+  #     CompatibleRuntimes:
+  #       - python3.7
+  #   Metadata:
+  #     BuildMethod: python3.7
+
+  # Lambda
+  PushOCNDailyPoint:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/push_ocn_daily_button/
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Timeout: 120
+      MemorySize: 3007
+      Environment:
+        Variables:
+          BUCKET_NAME:
+            !Ref S3Bucket
+      Role: !GetAtt S3ReadonlyAccessRole.Arn
+      Layers:
+        # - !Ref PythonLibLayers
+        - !Ref SeleniumDriverLayers
+
+  # S3
+  S3Bucket: # 環境変数で定義したバケット名とかぶらない名前でtemplate内で宣言
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
+      AccessControl: Private
+
+  # EventBridge
+  EventLaunch:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: AWS Lambda PushOCNDailyPoint
+      EventBusName: default
+      EventPattern:
+        test:
+          - Hello
+      ScheduleExpression: cron(0 */1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
+      State: ENABLED
+      Targets:
+      - Id: id_push_OCNDailyPoint # テンプレート内でユニークなリソースを識別する値。
+        Arn: !GetAtt PushOCNDailyPoint.Arn
+        RetryPolicy:
+          MaximumRetryAttempts: 2
+          MaximumEventAgeInSeconds: 300
