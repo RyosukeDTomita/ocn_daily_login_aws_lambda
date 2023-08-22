@@ -76,7 +76,7 @@ cd ocn_dialy_login_aws_lambda
 pip -r requirements.txt
 ```
 
-### Download headless-chrome and driver
+### Download headless-chromeium and driver
 
 ```shell
 cd ./create_selenium_driver_layers
