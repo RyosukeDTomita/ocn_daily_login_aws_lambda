@@ -15,5 +15,6 @@ mv -f chromedriver headless/
 mv -f headless-chromium headless/
 zip -r headless headless
 
-aws lambda publish-layer-version --layer-name selenium-driver --description "selenium driver lib" --zip-file fileb://headless.zip --compatible-runtimes  "python3.7"
+# No CloudFormation then, comment out below.
+#aws lambda publish-layer-version --layer-name selenium-driver --description "selenium driver lib" --zip-file fileb://headless.zip --compatible-runtimes  "python3.7"
 

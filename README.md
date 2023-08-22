@@ -74,7 +74,15 @@ git clone https://github.com:RyosukeDTomita/ocn_dialy_login_aws_lambda.git
 # set up
 cd ocn_dialy_login_aws_lambda
 pip -r requirements.txt
+```
 
+### Download headless-chrome and driver
+
+```shell
+cd ./create_selenium_driver_layers
+source mk_driver_lib_layer.sh
+ls create_selenium_driver_layers/headless
+chromedriver*  headless-chromium*  locales/
 ```
 
 ## Use CloudFormation
@@ -107,7 +115,6 @@ If you want to use GUI, see [README_gui.md](./docs/README_gui.md)
 ******
 
 
-
 # HOW TO USE
 - create cookies.pkl and upload to S3.
 
@@ -115,3 +122,9 @@ If you want to use GUI, see [README_gui.md](./docs/README_gui.md)
 python3 create_cookies.py --userid <docomo userid> --password <password> --bucket <bucket-name> --profile <aws cli profile>
 ```
 - Then, every 01:00 AM, EventBridge call lambda function and push OCN daily login button.
+
+:warning: If you want to just reupload `cookies.pkl`, you can use aws cli.
+
+```shell
+aws s3 cp cookies.pkl s3://cookie-for-iceman2 --acl private --profile=default
+```
