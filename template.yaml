@@ -97,14 +97,12 @@ Resources:
       AccessControl: Private
 
   # EventBridge
+  # EventBridgeを定義するにあたってSheduleExpressionとEventPatternのどちらかは必要である。ｚ
   EventLaunch:
     Type: AWS::Events::Rule
     Properties:
       Description: AWS Lambda PushOCNDailyPoint
       EventBusName: default
-      EventPattern:
-        test:
-          - Hello
       ScheduleExpression: cron(0 */1 * * ? *) # 00:00(UTC)を基準として1時間ごとに実行
       State: ENABLED
       Targets:
@@ -113,3 +111,12 @@ Resources:
         RetryPolicy:
           MaximumRetryAttempts: 2
           MaximumEventAgeInSeconds: 300
+
+  # EventBridgeのターゲットにLambdaを指定する場合はPermissionが必要
+  EventLaunchPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt PushOCNDailyPoint.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt EventLaunch.Arn
