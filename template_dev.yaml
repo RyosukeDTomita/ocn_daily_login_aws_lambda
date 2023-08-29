@@ -83,19 +83,11 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: # S3BucketForCookieはtemplate内で定義されているため使えない
-            !Ref S3Bucket
+            !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
       Role: !GetAtt S3ReadonlyAccessRole.Arn
       Layers:
         # - !Ref PythonLibLayers
         - !Ref SeleniumDriverLayers
-
-  # S3
-  S3Bucket: # template内の環境変数でS3BucketForCookieやLambdaで定義した環境変数呼び出しキーBUCKET_NAMEと被らないようにする。
-    Type: AWS::S3::Bucket
-    # DeletionPolicy: Retain
-    Properties:
-      BucketName: !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
-      AccessControl: Private
 
   # EventBridge
   # EventBridgeを定義するにあたってSheduleExpressionとEventPatternのどちらかは必要である。

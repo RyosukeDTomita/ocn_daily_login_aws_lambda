@@ -74,6 +74,7 @@ def _get_cookies_from_s3(bucket_name):
 def _fetch_driver():
     """fetch_driver.
     ヘッドレスモードでドライバを取得する。
+    ドライバーはLambda Layersに配置されている。
     """
     options = webdriver.ChromeOptions()
     # CloudFormationを使わない場合には/opt/headless/headless-chromiumを指定
