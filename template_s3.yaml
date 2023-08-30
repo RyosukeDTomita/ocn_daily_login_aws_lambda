@@ -1,0 +1,37 @@
+# !GetAttはテンプレート内でのARN等の参照に使う。
+# !Refはテンプレート内でのResourcesの参照に使う。
+# DependsOnには!Refを使わない。
+# CloudFomationはリソースの依存関係は!Refがついている場合には自動で解決される。
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  get ocn daily point automatically (only s3).
+Globals:
+  Function:
+    Timeout: 3
+
+
+Parameters:
+  # 開発環境か本番環境かを切り替えるためのパラメータ
+  Environment:
+    Type: String
+    AllowedValues:
+      - development
+    Default: development
+
+
+# 環境変数の設定
+Mappings:
+  EnvironmentMap:
+    development:
+      S3BucketForCookie: cookie-for-iceman2
+
+
+Resources:
+  # S3
+  S3Bucket: # template内の環境変数でS3BucketForCookieやLambdaで定義した環境変数呼び出しキーBUCKET_NAMEと被らないようにする。
+    Type: AWS::S3::Bucket
+    # DeletionPolicy: Retain
+    Properties:
+      BucketName: !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
+      AccessControl: Private

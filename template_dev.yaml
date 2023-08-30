@@ -1,11 +1,13 @@
 # !GetAttはテンプレート内でのARN等の属性を参照する。
 # !Refはテンプレート内でのResourcesの参照に使う。
+# !Subは${hoge}のようにして環境変数に指定したhogeの内容を代入する。
 # DependsOnには!Refを使わない。
 # CloudFomationはリソースの依存関係は!Refがついている場合には自動で解決される。
+# deploy時に-tでテンプレートを指定するとlambdaに使用している外部ライブラリが登録されなくなる。指定しなければsam build時に生成されたものが使われるのでうまく行く。
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  get ocn daily point automatically.
+  get ocn daily point automatically (dev).
 Globals:
   Function:
     Timeout: 3
@@ -83,22 +85,14 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: # S3BucketForCookieはtemplate内で定義されているため使えない
-            !Ref S3Bucket
+            !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
       Role: !GetAtt S3ReadonlyAccessRole.Arn
       Layers:
         # - !Ref PythonLibLayers
         - !Ref SeleniumDriverLayers
 
-  # S3
-  S3Bucket: # template内の環境変数でS3BucketForCookieやLambdaで定義した環境変数呼び出しキーBUCKET_NAMEと被らないようにする。
-    Type: AWS::S3::Bucket
-    # DeletionPolicy: Retain
-    Properties:
-      BucketName: !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
-      AccessControl: Private
-
   # EventBridge
-  # EventBridgeを定義するにあたってScheduleExpressionとEventPatternのどちらかは必要である。
+  # EventBridgeを定義するにあたってSheduleExpressionとEventPatternのどちらかは必要である。
   EventLaunch:
     Type: AWS::Events::Rule
     Properties:
@@ -121,3 +115,4 @@ Resources:
       FunctionName: !GetAtt PushOCNDailyPoint.Arn
       Principal: events.amazonaws.com
       SourceArn: !GetAtt EventLaunch.Arn
+
