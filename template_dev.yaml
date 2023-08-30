@@ -27,12 +27,27 @@ Mappings:
   EnvironmentMap:
     development:
       S3BucketForCookie: cookie-for-iceman2
-      S3ReadonlyAccessRole: for-lambda-s3-readonly-access-role
 
 
 Resources:
+  # Lambda用のIAMロール
+  S3ReadonlyAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: for-lambda-s3-readonly-access-role
+      # IAMロールがどのサービスまたはアカウントに対して信頼されるかを定義
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
   # Lambda Layers
-  # Lambda Layersは名前を指定するだけではだめそうなのでこちらに記載。
   SeleniumDriverLayers:
     Type: AWS::Serverless::LayerVersion
     DeletionPolicy: Retain # スタック削除時に削除しない
@@ -71,15 +86,13 @@ Resources:
         Variables:
           BUCKET_NAME: # S3BucketForCookieはtemplate内で定義されているため使えない
             !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
-      Role:
-        Fn::Sub:
-          - arn:aws:iam::${AWS::AccountId}:role/${RoleName}
-          - RoleName: !FindInMap [EnvironmentMap, !Ref Environment, S3ReadonlyAccessRole]
+      Role: !GetAtt S3ReadonlyAccessRole.Arn
       Layers:
+        # - !Ref PythonLibLayers
         - !Ref SeleniumDriverLayers
 
   # EventBridge
-  # EventBridgeを定義するにあたってScheduleExpressionとEventPatternのどちらかは必要である。
+  # EventBridgeを定義するにあたってSheduleExpressionとEventPatternのどちらかは必要である。
   EventLaunch:
     Type: AWS::Events::Rule
     Properties:
@@ -102,3 +115,4 @@ Resources:
       FunctionName: !GetAtt PushOCNDailyPoint.Arn
       Principal: events.amazonaws.com
       SourceArn: !GetAtt EventLaunch.Arn
+
