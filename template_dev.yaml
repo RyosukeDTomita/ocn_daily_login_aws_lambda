@@ -1,11 +1,13 @@
-# !GetAttはテンプレート内でのARN等の参照に使う。
+# !GetAttはテンプレート内でのARN等の属性を参照する。
 # !Refはテンプレート内でのResourcesの参照に使う。
+# !Subは${hoge}のようにして環境変数に指定したhogeの内容を代入する。
 # DependsOnには!Refを使わない。
 # CloudFomationはリソースの依存関係は!Refがついている場合には自動で解決される。
+# deploy時に-tでテンプレートを指定するとlambdaに使用している外部ライブラリが登録されなくなる。指定しなければsam build時に生成されたものが使われるのでうまく行く。
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  get ocn daily point automatically.
+  get ocn daily point automatically (dev).
 Globals:
   Function:
     Timeout: 3
@@ -25,27 +27,12 @@ Mappings:
   EnvironmentMap:
     development:
       S3BucketForCookie: cookie-for-iceman2
+      S3ReadonlyAccessRole: for-lambda-s3-readonly-access-role
 
 
 Resources:
-  # Lambda用のIAMロール
-  S3ReadonlyAccessRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: for-lambda-s3-readonly-access-role
-      # IAMロールがどのサービスまたはアカウントに対して信頼されるかを定義
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-
   # Lambda Layers
+  # Lambda Layersは名前を指定するだけではだめそうなのでこちらに記載。
   SeleniumDriverLayers:
     Type: AWS::Serverless::LayerVersion
     DeletionPolicy: Retain # スタック削除時に削除しない
@@ -84,13 +71,15 @@ Resources:
         Variables:
           BUCKET_NAME: # S3BucketForCookieはtemplate内で定義されているため使えない
             !FindInMap [EnvironmentMap, !Ref Environment, S3BucketForCookie]
-      Role: !GetAtt S3ReadonlyAccessRole.Arn
+      Role:
+        Fn::Sub:
+          - arn:aws:iam::${AWS::AccountId}:role/${RoleName}
+          - RoleName: !FindInMap [EnvironmentMap, !Ref Environment, S3ReadonlyAccessRole]
       Layers:
-        # - !Ref PythonLibLayers
         - !Ref SeleniumDriverLayers
 
   # EventBridge
-  # EventBridgeを定義するにあたってSheduleExpressionとEventPatternのどちらかは必要である。
+  # EventBridgeを定義するにあたってScheduleExpressionとEventPatternのどちらかは必要である。
   EventLaunch:
     Type: AWS::Events::Rule
     Properties:

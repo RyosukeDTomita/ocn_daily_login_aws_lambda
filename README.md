@@ -112,6 +112,23 @@ sam deploy --guided --capabilities CAPABILITY_NAMED_IAM
 sam delete # delete stack
 ```
 If you want to use GUI, see [README_gui.md](./docs/README_gui.md)
+
+**For developer**, you can only deploy IAM Role and S3 for the first deploy.
+
+```shell
+# only initial deploy
+sam build -t ./template_s3iam.yaml
+sam deploy --guided --capabilities CAPABILITY_NAMED_IAM
+```
+
+```shell
+# skip deploy S3 and IAM Role
+sam build -t template_dev.yaml
+sam deploy --guided
+```
+> **Note**
+> Do not use `-t` in `sam deploy`
+> If you use, python library(boto3 and seleniumA) do not deploy with lambda and `No module name` Error occured.
 ******
 
 
@@ -128,3 +145,4 @@ python3 create_cookies.py --userid <docomo userid> --password <password> --bucke
 ```shell
 aws s3 cp cookies.pkl s3://cookie-for-iceman2 --acl private --profile=default
 ```
+

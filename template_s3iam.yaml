@@ -28,6 +28,23 @@ Mappings:
 
 
 Resources:
+  # Lambda用のIAMロール
+  S3ReadonlyAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: for-lambda-s3-readonly-access-role
+      # IAMロールがどのサービスまたはアカウントに対して信頼されるかを定義
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
   # S3
   S3Bucket: # template内の環境変数でS3BucketForCookieやLambdaで定義した環境変数呼び出しキーBUCKET_NAMEと被らないようにする。
     Type: AWS::S3::Bucket

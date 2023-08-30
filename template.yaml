@@ -1,4 +1,4 @@
-# !GetAttはテンプレート内でのARN等の参照に使う。
+# !GetAttはテンプレート内でのARN等の属性を参照する。
 # !Refはテンプレート内でのResourcesの参照に使う。
 # DependsOnには!Refを使わない。
 # CloudFomationはリソースの依存関係は!Refがついている場合には自動で解決される。
@@ -98,7 +98,7 @@ Resources:
       AccessControl: Private
 
   # EventBridge
-  # EventBridgeを定義するにあたってSheduleExpressionとEventPatternのどちらかは必要である。
+  # EventBridgeを定義するにあたってScheduleExpressionとEventPatternのどちらかは必要である。
   EventLaunch:
     Type: AWS::Events::Rule
     Properties:
