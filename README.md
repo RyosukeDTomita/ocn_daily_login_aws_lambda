@@ -46,7 +46,7 @@ aws_secret_access_key = <<IAM SecretAccessKey>>
 - check connection
 
 ```shell
-aws s3 ls --profile gr360
+aws sts get-caller-identity
 ```
 
 ### python(venv)
